@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard redes sociales Grupo AMPM</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --surface2: #1a1e2a;
+    --border: #252a38;
+    --accent-cyan: #00d4aa;
+    --accent-blue: #3b82f6;
+    --accent-purple: #a855f7;
+    --accent-amber: #f59e0b;
+    --accent-rose: #f43f5e;
+    --text-primary: #e8eaf0;
+    --text-secondary: #8892a4;
+    --text-muted: #4a5568;
+    --wa: #25D366;
+    --card-radius: 12px;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  body.light-mode {
+    --bg: #f1f5f9;
+    --surface: #ffffff;
+    --surface2: #f8fafc;
+    --border: #e2e8f0;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    min-height: 100vh;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 28px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    transition: background-color 0.3s, border-color 0.3s;
+  }
+
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+    color: #fff;
+  }
+  .logo-text { font-size: 14px; font-weight: 600; letter-spacing: -0.3px; }
+  .logo-sub { font-size: 11px; color: var(--text-secondary); font-weight: 400; }
+
+  .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; }
+
+  .filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .filter-group { display: flex; flex-direction: column; gap: 2px; }
+  .filter-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  select, input[type="date"] {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s, background-color 0.3s, color 0.3s;
+    min-width: 110px;
+  }
+  select:focus, input[type="date"]:focus { border-color: var(--accent-cyan); }
+
+  .btn-reset {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+    height: 30px;
+    margin-top: 14px;
+  }
+  .btn-reset:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+  
+  .btn-theme { margin-top: 14px; font-size: 15px; padding: 4px 10px; display: grid; place-items: center; }
+
+  .live-badge {
+    display: flex; align-items: center; gap: 6px; padding: 5px 12px;
+    background: rgba(0,212,170,0.08); border: 1px solid rgba(0,212,170,0.25);
+    border-radius: 20px; font-size: 11px; color: var(--accent-cyan); font-weight: 500;
+    margin-top: 14px;
+  }
+  .live-dot {
+    width: 6px; height: 6px; background: var(--accent-cyan); border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  /* ── LAYOUT ── */
+  main { padding: 14px 18px; padding-bottom: 48px; }
+
+  /* ── KPI ROW ── */
+  .kpi-row { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+  .kpi-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--card-radius); padding: 12px 14px; position: relative; overflow: hidden; min-width: 0;
+    transition: background-color 0.3s, border-color 0.3s;
+  }
+  .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+  .kpi-card.c1::before { background: var(--accent-cyan); }
+  .kpi-card.c2::before { background: var(--wa); }
+  .kpi-card.c3::before { background: var(--accent-rose); }
+  .kpi-card.c4::before { background: var(--accent-amber); }
+  .kpi-card.c5::before { background: var(--accent-purple); }
+
+  .kpi-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
+  .kpi-value { font-family: var(--font-mono); font-size: 24px; font-weight: 600; line-height: 1; margin-bottom: 4px; }
+  .kpi-card.c1 .kpi-value { color: var(--accent-cyan); }
+  .kpi-card.c2 .kpi-value { color: var(--wa); }
+  .kpi-card.c3 .kpi-value { color: var(--accent-rose); }
+  .kpi-card.c4 .kpi-value { color: var(--accent-amber); }
+  .kpi-card.c5 .kpi-value { color: var(--accent-purple); }
+  .kpi-sub { font-size: 11px; color: var(--text-secondary); }
+
+  /* ── GRID ── */
+  .grid-1 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin-bottom: 10px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
+  .grid-2-1 { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(320px, 1fr); gap: 10px; margin-bottom: 10px; }
+  .grid-1 > *, .grid-2 > *, .grid-3 > *, .grid-2-1 > * { min-width: 0; }
+
+  /* ── CHART CARD & CONTAINER FIX ── */
+  .chart-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-radius);
+    padding: 13px 14px; position: relative; min-width: 0; overflow: hidden; transition: border-color 0.2s, background-color 0.3s;
+  }
+  .chart-card.selected { border-color: var(--accent-cyan); box-shadow: 0 0 0 1px rgba(0,212,170,0.2); }
+  .chart-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
+  .chart-title { font-size: 12px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.2px; }
+  .chart-subtitle { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+  .chart-badge { font-size: 9px; padding: 2px 8px; border-radius: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; }
+
+  .badge-bar { background: rgba(59,130,246,0.15); color: var(--accent-blue); }
+  .badge-line { background: rgba(0,212,170,0.12); color: var(--accent-cyan); }
+  .badge-donut { background: rgba(168,85,247,0.12); color: var(--accent-purple); }
+  .badge-scatter { background: rgba(245,158,11,0.12); color: var(--accent-amber); }
+  .badge-radar { background: rgba(244,63,94,0.12); color: var(--accent-rose); }
+
+  .canvas-container { position: relative; height: 145px; width: 100%; min-width: 0; cursor: pointer; }
+  #card-donut .chart-header { align-items: center; justify-content: center; text-align: center; padding: 0 72px; position: relative; }
+  #card-donut .chart-badge { position: absolute; right: 0; top: 0; }
+  #card-donut .canvas-container { height: 220px; max-width: 560px; margin: 0 auto; }
+
+
+  /* ── TABLES ── */
+  .agent-table-wrap { overflow: visible; max-height: none; }
+  .agent-table, .summary-table { width: 100%; border-collapse: collapse; }
+  .agent-table th, .summary-table th { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; text-align: left; padding: 0 7px 7px; font-weight: 500; }
+  .agent-table td, .summary-table td { padding: 8px 7px; border-top: 1px solid var(--border); font-size: 11px; vertical-align: middle; }
+  .agent-table tr { cursor: pointer; transition: background 0.15s; }
+  .agent-table tr:hover td { background: var(--surface2); }
+  .agent-table tr.selected-row td { background: rgba(0,212,170,0.1); }
+  .summary-table th:not(:first-child), .summary-table td:not(:first-child) { text-align: right; }
+  .summary-table tbody tr:hover td { background: var(--surface2); }
+  .summary-table .total-row td { color: var(--text-primary); font-weight: 600; background: var(--surface2); }
+  .table-container { width: 100%; overflow-x: auto; }
+  .empty-table { color: var(--text-muted); text-align: center !important; padding: 22px 8px !important; }
+  .agent-name { font-weight: 500; color: var(--text-primary); }
+  .agent-avatar {
+    display: inline-flex; width: 26px; height: 26px; border-radius: 50%; align-items: center;
+    justify-content: center; font-size: 10px; font-weight: 700; margin-right: 8px; flex-shrink: 0;
+  }
+  .bar-mini { height: 4px; border-radius: 2px; margin-top: 4px; }
+  .mono { font-family: var(--font-mono); }
+  .hint { font-size: 10px; color: var(--text-muted); display: flex; align-items: center; gap: 5px; margin-top: 10px; }
+
+  /* ── TIPIF LIST ── */
+  .tipif-list { display: flex; flex-direction: column; gap: 8px; }
+  .tipif-row { display: flex; flex-direction: column; gap: 3px; cursor: pointer; padding: 4px; border-radius: 6px; transition: background-color 0.2s; }
+  .tipif-row:hover { background: var(--surface2); }
+  .tipif-row.selected { background: rgba(0,212,170,0.1); }
+  .tipif-meta { display: flex; justify-content: space-between; align-items: center; }
+  .tipif-name { font-size: 11px; color: var(--text-primary); }
+  .tipif-count { font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--accent-cyan); }
+  .tipif-bar-bg { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .tipif-bar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue)); transition: width 0.6s ease; }
+
+  /* ── SCROLL & STATUS ── */
+  .status-bar {
+    display: flex; align-items: center; gap: 20px; padding: 10px 28px; border-top: 1px solid var(--border);
+    background: var(--surface); font-size: 10px; color: var(--text-muted); position: fixed; bottom: 0; left: 0; right: 0;
+    transition: background-color 0.3s, border-color 0.3s;
+  }
+
+  .active-filter-banner {
+    background: rgba(0,212,170,0.06); border: 1px solid rgba(0,212,170,0.2); border-radius: 8px;
+    padding: 8px 14px; margin-bottom: 14px; font-size: 11px; color: var(--accent-cyan); display: none; align-items: center; gap: 8px;
+  }
+  .active-filter-banner.show { display: flex; justify-content: space-between; }
+  .clear-filter-btn { cursor: pointer; text-decoration: underline; font-weight: 600; }
+
+  .toast {
+    position: fixed; bottom: 60px; right: 24px; padding: 10px 18px; border-radius: 8px; font-size: 12px;
+    font-weight: 500; z-index: 9999; transform: translateY(20px); opacity: 0; transition: all 0.3s; pointer-events: none;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { background: rgba(0,212,170,0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); }
+  .toast.error { background: rgba(244,63,94,0.15); border: 1px solid var(--accent-rose); color: var(--accent-rose); }
+
+  .designer-credit {
+    text-align: right;
+    font-size: 11px;
+    color: var(--accent-blue);
+    font-weight: 600;
+    letter-spacing: 0.2px;
+  }
+
+  @media (max-width: 1200px) {
+    .kpi-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 820px) {
+    header { position: static; align-items: flex-start; gap: 14px; flex-direction: column; padding: 14px 16px; }
+    .header-right { width: 100%; align-items: flex-start; }
+    .designer-credit { text-align: left; }
+    .filters { width: 100%; }
+    .filter-group { flex: 1 1 140px; }
+    select, input[type="date"] { width: 100%; min-width: 0; }
+    main { padding: 14px 12px 64px; }
+    .kpi-row, .grid-1, .grid-2, .grid-3, .grid-2-1 { grid-template-columns: 1fr; }
+    .canvas-container { height: 240px; }
+    .status-bar { position: static; padding: 10px 16px; }
+    .agent-table { min-width: 650px; }
+    .agent-table-wrap { overflow-x: auto; }
+  }
+
+  @media (max-width: 520px) {
+    .kpi-row { grid-template-columns: 1fr; }
+    .chart-card { padding: 14px; }
+    .canvas-container { height: 220px; }
+    .btn-reset, .btn-theme, .live-badge { margin-top: 0; }
+  }
+
+</style>
+</head>
+<body class="light-mode">
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">📊</div>
+    <div>
+      <div class="logo-text">Dashboard redes sociales Grupo AMPM</div>
+      <div class="logo-sub">Monitoreo dinámico local</div>
+    </div>
+  </div>
+
+  <div class="header-right">
+    <div class="designer-credit">Designed by Pedro Estrada</div>
+    <div class="filters">
+      <div class="filter-group">
+        <span class="filter-label">Año</span>
+        <select id="filterAnio"></select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Mes</span>
+        <select id="filterMes"></select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Fecha Inicio</span>
+        <input type="date" id="filterFechaInicio">
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Fecha Fin</span>
+        <input type="date" id="filterFechaFin">
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Agente</span>
+        <select id="filterAgente"><option value="all">Todos los agentes</option></select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Canal</span>
+        <select id="filterCanal"><option value="all">Todos los canales</option></select>
+      </div>
+      <button class="btn-reset" onclick="refreshMonthCatalog(true)" id="scanMonths" title="Buscar nuevos archivos mensuales">↻ Datos</button>
+      <button class="btn-reset" onclick="resetFilters()">↺ Limpiar</button>
+      <button class="btn-reset btn-theme" onclick="toggleTheme()" id="themeToggle" title="Cambiar Tema">🌙</button>
+      <div class="live-badge"><div class="live-dot"></div> DATOS LOCALES</div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="active-filter-banner" id="filterBanner">
+    <div><span>🔍</span> <span id="filterBannerText">Filtros dinámicos activos</span></div>
+    <div class="clear-filter-btn" onclick="resetFilters()">Limpiar todo</div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi-card c1">
+      <div class="kpi-label">Total Conversaciones</div>
+      <div class="kpi-value" id="kpi-total">—</div>
+      <div class="kpi-sub" id="kpi-sub-fecha">Selecciona un año para comenzar</div>
+    </div>
+    <div class="kpi-card c2">
+      <div class="kpi-label">Finalizadas</div>
+      <div class="kpi-value" id="kpi-fin">—</div>
+      <div class="kpi-sub" id="kpi-fin-pct">— tasa de cierre</div>
+    </div>
+    <div class="kpi-card c3">
+      <div class="kpi-label">Espera Promedio</div>
+      <div class="kpi-value" id="kpi-espera">—</div>
+      <div class="kpi-sub">Tiempo medio en cola</div>
+    </div>
+    <div class="kpi-card c4">
+      <div class="kpi-label">FRT Promedio</div>
+      <div class="kpi-value" id="kpi-frt">—</div>
+      <div class="kpi-sub">Tiempo 1ª respuesta (agente)</div>
+    </div>
+    <div class="kpi-card c5">
+      <div class="kpi-label">ART Promedio</div>
+      <div class="kpi-value" id="kpi-art">—</div>
+      <div class="kpi-sub">Duración resolución</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="chart-card" id="card-vol-canal">
+      <div class="chart-header">
+        <div><div class="chart-title">1 · Volumen por Canal</div><div class="chart-subtitle">Filtro cruzado activo (Clic en barra)</div></div>
+        <span class="chart-badge badge-bar">Barras</span>
+      </div>
+      <div class="canvas-container"><canvas id="chartVolCanal"></canvas></div>
+    </div>
+    <div class="chart-card" id="card-estado-canal">
+      <div class="chart-header">
+        <div><div class="chart-title">2 · Contactos por Tipificación</div><div class="chart-subtitle">Distribución de contactos por tipificación</div></div>
+        <span class="chart-badge badge-radar">Barras verticales</span>
+      </div>
+      <div class="canvas-container"><canvas id="chartEstadoCanal"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="chart-card" id="card-frt">
+      <div class="chart-header">
+        <div><div class="chart-title">3 · FRT por Agente</div><div class="chart-subtitle">Tiempo de 1ª respuesta (seg)</div></div>
+        <span class="chart-badge badge-bar">Barras horiz.</span>
+      </div>
+      <div class="canvas-container"><canvas id="chartFRT"></canvas></div>
+      <div class="hint">Clic en barra filtra por agente</div>
+    </div>
+    <div class="chart-card" id="card-art">
+      <div class="chart-header">
+        <div><div class="chart-title">4 · ART por Agente</div><div class="chart-subtitle">Duración media de resolución (seg)</div></div>
+        <span class="chart-badge badge-bar">Barras horiz.</span>
+      </div>
+      <div class="canvas-container"><canvas id="chartART"></canvas></div>
+      <div class="hint">Clic en barra filtra por agente</div>
+    </div>
+    <div class="chart-card" id="card-hora">
+      <div class="chart-header">
+        <div><div class="chart-title">5 · Carga por Franja Horaria</div><div class="chart-subtitle">Volumen entrante por hora</div></div>
+        <span class="chart-badge badge-line">Línea / Área</span>
+      </div>
+      <div class="canvas-container"><canvas id="chartHora"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid-2-1">
+    <div class="chart-card" id="card-agente-tabla">
+      <div class="chart-header">
+        <div><div class="chart-title">6 · Desempeño de Agentes</div><div class="chart-subtitle">Contactos · FRT · ART · Clic para filtrar</div></div>
+        <span class="chart-badge badge-scatter">Tabla dinámica</span>
+      </div>
+      <div class="agent-table-wrap">
+        <table class="agent-table" id="agentTable">
+          <thead>
+            <tr><th>Agente</th><th>Contactos</th><th>FRT (seg)</th><th>ART (seg)</th><th>Espera prom.</th></tr>
+          </thead>
+          <tbody id="agentTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="chart-card" id="card-donut">
+      <div class="chart-header">
+        <div><div class="chart-title">7 · Mix de Canales</div><div class="chart-subtitle">Total y porcentaje por canal · Clic para filtrar</div></div>
+        <span class="chart-badge badge-donut">Donut</span>
+      </div>
+      <div class="canvas-container"><canvas id="chartDonut"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="chart-card" id="card-tipif">
+      <div class="chart-header">
+        <div><div class="chart-title">8 · Atención Bot vs Agente Humano</div><div class="chart-subtitle">Total y porcentaje de casos atendidos</div></div>
+        <span class="chart-badge badge-donut">Donut</span>
+      </div>
+      <div class="canvas-container"><canvas id="chartTipif"></canvas></div>
+    </div>
+    <div class="chart-card" id="card-frt-hora">
+      <div class="chart-header">
+        <div><div class="chart-title">9 · Estado de Delegación por Hora</div><div class="chart-subtitle">Distribución por hora</div></div>
+        <span class="chart-badge badge-line">Línea</span>
+      </div>
+      <div class="canvas-container"><canvas id="chartFRTHora"></canvas></div>
+    </div>
+    <div class="chart-card" id="card-delegacion">
+      <div class="chart-header">
+        <div><div class="chart-title">10 · Resolución Bot vs Agente</div><div class="chart-subtitle">Por tipo de canal</div></div>
+        <span class="chart-badge badge-donut">Barras apiladas</span>
+      </div>
+      <div class="canvas-container"><canvas id="chartDelegacion"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="chart-card" id="card-monthly-resolver">
+      <div class="chart-header">
+        <div><div class="chart-title">Resoluciones mensuales · Bot vs Agente Humano</div><div class="chart-subtitle">Contactos finalizados durante el año seleccionado</div></div>
+        <span class="chart-badge badge-scatter">Tabla mensual</span>
+      </div>
+      <div class="table-container">
+        <table class="summary-table" id="monthlyResolverTable">
+          <thead><tr><th>Mes</th><th>Bot</th><th>Agente humano</th><th>Total</th><th>% Bot</th></tr></thead>
+          <tbody id="monthlyResolverBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="chart-card" id="card-monthly-social">
+      <div class="chart-header">
+        <div><div class="chart-title">Resoluciones mensuales del Bot por Red Social</div><div class="chart-subtitle">Contactos finalizados por el Bot, desglosados por canal</div></div>
+        <span class="chart-badge badge-scatter">Tabla mensual</span>
+      </div>
+      <div class="table-container">
+        <table class="summary-table" id="monthlySocialTable">
+          <thead id="monthlySocialHead"></thead>
+          <tbody id="monthlySocialBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-1">
+    <div class="chart-card" id="card-monthly-human-social">
+      <div class="chart-header">
+        <div><div class="chart-title">Resoluciones mensuales de humano por Red Social</div><div class="chart-subtitle">Contactos finalizados por agentes humanos, desglosados por canal</div></div>
+        <span class="chart-badge badge-scatter">Tabla mensual</span>
+      </div>
+      <div class="table-container">
+        <table class="summary-table" id="monthlyHumanSocialTable">
+          <thead id="monthlyHumanSocialHead"></thead>
+          <tbody id="monthlyHumanSocialBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="status-bar" id="statusBar">
+  <div class="status-item" style="color:var(--text-muted)">
+    Preparando datos locales...
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// El navegador no puede listar una carpeta local. Por eso se prueban automáticamente
+// los nombres AAAA-MM.js desde 2026 hasta un año después del año actual.
+const FIRST_DATA_YEAR = 2026;
+const MONTH_LOOKAHEAD_YEARS = 1;
+let CONFIG_MESES = [];
+
+const CANALES_PERMITIDOS = ['Facebook-Messenger', 'LiveChat', 'WhatsApp', 'Instagram', 'Telegram'];
+const CHART_PALETTE = ['#00d4aa', '#3b82f6', '#a855f7', '#f59e0b', '#f43f5e', '#06b6d4', '#84cc16', '#ec4899'];
+const COLORS = { cyan: '#00d4aa', blue: '#3b82f6', purple: '#a855f7', amber: '#f59e0b', rose: '#f43f5e' };
+const ROW_KEY_CACHE = new WeakMap();
+const DATA = { processed: {} };
+
+let YEAR_DATA_ARRAY = [];
+let RAW_DATA_ARRAY = [];
+let state = { canal: 'all', agente: 'all', tipificacion: 'all', fechaInicio: '', fechaFin: '', anio: 'all', mes: 'all' };
+let AGENT_COLORS = {};
+let AGENT_INITIALS = {};
+let charts = {};
+let toastTimer;
+
+const normalizeText = value => String(value ?? '')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase()
+  .trim()
+  .replace(/\s+/g, ' ');
+
+const allowedChannels = new Set(CANALES_PERMITIDOS.map(normalizeText));
+const formatNum = value => new Intl.NumberFormat('es-MX').format(Math.round(Number(value) || 0));
+const formatDate = date => new Intl.DateTimeFormat('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }).format(date);
+const escapeHTML = value => String(value ?? '').replace(/[&<>'"]/g, character => ({
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+}[character]));
+
+function getColValue(row, possibleKeys) {
+  let normalizedKeys = ROW_KEY_CACHE.get(row);
+  if (!normalizedKeys) {
+    normalizedKeys = new Map(Object.keys(row).map(key => [normalizeText(key), key]));
+    ROW_KEY_CACHE.set(row, normalizedKeys);
+  }
+
+  for (const key of possibleKeys) {
+    const realKey = normalizedKeys.get(normalizeText(key));
+    if (realKey && row[realKey] !== undefined && String(row[realKey]).trim() !== '') return row[realKey];
+  }
+  return null;
+}
+
+function parseTSV(text) {
+  const matrix = [];
+  let row = [];
+  let field = '';
+  let inQuotes = false;
+
+  for (let index = 0; index < text.length; index++) {
+    const character = text[index];
+
+    if (character === '"') {
+      if (inQuotes && text[index + 1] === '"') {
+        field += '"';
+        index++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (character === '\t' && !inQuotes) {
+      row.push(field);
+      field = '';
+    } else if ((character === '\n' || character === '\r') && !inQuotes) {
+      if (character === '\r' && text[index + 1] === '\n') index++;
+      row.push(field);
+      if (row.some(value => String(value).trim() !== '')) matrix.push(row);
+      row = [];
+      field = '';
+    } else {
+      field += character;
+    }
+  }
+
+  row.push(field);
+  if (row.some(value => String(value).trim() !== '')) matrix.push(row);
+  if (matrix.length < 2) return [];
+
+  const headers = matrix[0].map((header, index) => (index === 0 ? header.replace(/^\uFEFF/, '') : header).trim());
+  return matrix.slice(1).map(values => {
+    const result = {};
+    headers.forEach((header, index) => { result[header] = String(values[index] ?? '').trim(); });
+    return result;
+  });
+}
+
+function parseRowDate(value) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return new Date(value.getTime());
+  if (typeof value === 'number' && Number.isFinite(value)) return new Date(Math.round((value - 25569) * 86400 * 1000));
+  if (typeof value !== 'string') return null;
+
+  const match = value.trim().match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if (!match) return null;
+  const date = new Date(
+    Number(match[1]), Number(match[2]) - 1, Number(match[3]),
+    Number(match[4] || 0), Number(match[5] || 0), Number(match[6] || 0)
+  );
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function parseMetric(row, keys) {
+  const value = getColValue(row, keys);
+  if (value === null || String(value).trim() === '') return null;
+  const number = Number(String(value).replace(',', '.'));
+  return Number.isFinite(number) ? number : null;
+}
+
+function isResolvedRow(row) {
+  const status = normalizeText(getColValue(row, ['estado', 'estado del contacto', 'estatus']));
+  return ['finaliz', 'resuelt', 'cerrad'].some(term => status.includes(term));
+}
+
+function buildActiveRowPredicate() {
+  const startDate = state.fechaInicio ? new Date(`${state.fechaInicio}T00:00:00`) : null;
+  const endDate = state.fechaFin ? new Date(`${state.fechaFin}T23:59:59`) : null;
+
+  return row => {
+    const channel = getColValue(row, ['tipo de canal', 'canal']) || 'Desconocido';
+    const agent = getColValue(row, ['agente']) || 'Sin Asignar';
+    const typification = getColValue(row, ['tipificación', 'tipificacion', 'etiquetas']) || 'Sin Tipificar';
+    if (state.canal !== 'all' && channel !== state.canal) return false;
+    if (state.agente !== 'all' && agent !== state.agente) return false;
+    if (state.tipificacion !== 'all' && typification !== state.tipificacion) return false;
+
+    if (startDate || endDate) {
+      const rowDate = parseRowDate(getColValue(row, ['fecha de inicio', 'fecha']));
+      if (!rowDate) return false;
+      if (startDate && rowDate < startDate) return false;
+      if (endDate && rowDate > endDate) return false;
+    }
+    return true;
+  };
+}
+
+function setStatus(message) {
+  document.getElementById('statusBar').innerHTML = `<div class="status-item">${escapeHTML(message)}</div>`;
+}
+
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+  clearTimeout(toastTimer);
+  toast.textContent = message;
+  toast.className = `toast ${type} show`;
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
+}
+
+function destroyCharts() {
+  Object.values(charts).forEach(chart => chart?.destroy());
+  charts = {};
+}
+
+function getChartDefaults() {
+  const isLight = document.body.classList.contains('light-mode');
+  const textColor = isLight ? '#64748b' : '#8892a4';
+  const tooltipBg = isLight ? '#ffffff' : '#1a1e2a';
+  const tooltipBorder = isLight ? '#e2e8f0' : '#252a38';
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 350 },
+    interaction: { intersect: false, mode: 'nearest' },
+    plugins: {
+      legend: { labels: { color: textColor, font: { family: 'Inter', size: 11 }, boxWidth: 10 } },
+      tooltip: {
+        backgroundColor: tooltipBg,
+        borderColor: tooltipBorder,
+        borderWidth: 1,
+        titleColor: isLight ? '#0f172a' : '#e8eaf0',
+        bodyColor: textColor,
+        padding: 10,
+        callbacks: { label: context => `${context.dataset.label ? context.dataset.label + ': ' : ''}${formatNum(context.raw)}` }
+      }
+    },
+    scales: {
+      x: { ticks: { color: textColor, font: { size: 10 }, maxRotation: 35, minRotation: 0 }, grid: { display: false }, border: { display: false } },
+      y: { ticks: { color: textColor, font: { size: 10 } }, grid: { display: false }, border: { display: false }, beginAtZero: true }
+    }
+  };
+}
+
+const doughnutCenterTotal = {
+  id: 'doughnutCenterTotal',
+  afterDraw(chart) {
+    const values = chart.data.datasets?.[0]?.data || [];
+    const total = values.reduce((sum, value) => sum + (Number(value) || 0), 0);
+    if (!chart.chartArea || !values.length) return;
+
+    const { left, right, top, bottom } = chart.chartArea;
+    const centerX = (left + right) / 2;
+    const centerY = (top + bottom) / 2;
+    const textColor = document.body.classList.contains('light-mode') ? '#0f172a' : '#e8eaf0';
+    const mutedColor = document.body.classList.contains('light-mode') ? '#64748b' : '#8892a4';
+    chart.ctx.save();
+    chart.ctx.textAlign = 'center';
+    chart.ctx.textBaseline = 'middle';
+    chart.ctx.fillStyle = mutedColor;
+    chart.ctx.font = '10px Inter';
+    chart.ctx.fillText('Total', centerX, centerY - 9);
+    chart.ctx.fillStyle = textColor;
+    chart.ctx.font = '600 15px "JetBrains Mono"';
+    chart.ctx.fillText(formatNum(total), centerX, centerY + 9);
+    chart.ctx.restore();
+  }
+};
+
+function getDoughnutOptions(def, onClick) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '62%',
+    onClick,
+    plugins: {
+      ...def.plugins,
+      legend: {
+        ...def.plugins.legend,
+        position: 'right',
+        labels: {
+          ...def.plugins.legend.labels,
+          generateLabels(chart) {
+            const dataset = chart.data.datasets[0];
+            const values = dataset.data.map(value => Number(value) || 0);
+            const total = values.reduce((sum, value) => sum + value, 0);
+            return chart.data.labels.map((label, index) => ({
+              text: `${label}: ${formatNum(values[index])} (${total ? (values[index] / total * 100).toFixed(1) : '0.0'}%)`,
+              fillStyle: Array.isArray(dataset.backgroundColor) ? dataset.backgroundColor[index] : dataset.backgroundColor,
+              strokeStyle: Array.isArray(dataset.borderColor) ? dataset.borderColor[index] : dataset.borderColor,
+              lineWidth: dataset.borderWidth || 0,
+              hidden: !chart.getDataVisibility(index),
+              index
+            }));
+          }
+        }
+      },
+      tooltip: {
+        ...def.plugins.tooltip,
+        callbacks: {
+          label(context) {
+            const values = context.dataset.data.map(value => Number(value) || 0);
+            const total = values.reduce((sum, value) => sum + value, 0);
+            const value = Number(context.raw) || 0;
+            return `${context.label}: ${formatNum(value)} (${total ? (value / total * 100).toFixed(1) : '0.0'}%)`;
+          }
+        }
+      }
+    }
+  };
+}
+
+function updateDateBounds(rows) {
+  const dates = rows
+    .map(row => parseRowDate(getColValue(row, ['fecha de inicio', 'fecha'])))
+    .filter(Boolean)
+    .sort((a, b) => a - b);
+  const startInput = document.getElementById('filterFechaInicio');
+  const endInput = document.getElementById('filterFechaFin');
+
+  if (!dates.length) {
+    startInput.removeAttribute('min'); startInput.removeAttribute('max');
+    endInput.removeAttribute('min'); endInput.removeAttribute('max');
+    return;
+  }
+
+  const toISO = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  const min = toISO(dates[0]);
+  const max = toISO(dates[dates.length - 1]);
+  startInput.min = min; startInput.max = max;
+  endInput.min = min; endInput.max = max;
+}
+
+function buildMonthCandidates() {
+  const lastYear = Math.max(FIRST_DATA_YEAR, new Date().getFullYear() + MONTH_LOOKAHEAD_YEARS);
+  const candidates = [];
+  for (let year = FIRST_DATA_YEAR; year <= lastYear; year++) {
+    for (let month = 1; month <= 12; month++) {
+      candidates.push(`${year}-${String(month).padStart(2, '0')}`);
+    }
+  }
+  return candidates;
+}
+
+function getMonthName(monthId) {
+  const [year, month] = monthId.split('-').map(Number);
+  const name = new Intl.DateTimeFormat('es-MX', { month: 'long' }).format(new Date(year, month - 1, 1));
+  return `${name.charAt(0).toUpperCase() + name.slice(1)} ${year}`;
+}
+
+async function probeMonthFile(monthId) {
+  if (typeof window.MisMesesDisponibles?.[monthId] === 'string') return true;
+  const paths = [`datos/${monthId}.js`, `${monthId}.js`];
+
+  for (const path of paths) {
+    const found = await new Promise(resolve => {
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = path;
+      script.onload = () => {
+        const available = typeof window.MisMesesDisponibles?.[monthId] === 'string';
+        script.remove();
+        resolve(available);
+      };
+      script.onerror = () => {
+        script.remove();
+        resolve(false);
+      };
+      document.body.appendChild(script);
+    });
+    if (found) return true;
+  }
+  return false;
+}
+
+async function discoverAvailableMonths() {
+  const candidates = buildMonthCandidates();
+  const detected = [];
+  let nextIndex = 0;
+
+  const worker = async () => {
+    while (nextIndex < candidates.length) {
+      const monthId = candidates[nextIndex++];
+      if (await probeMonthFile(monthId)) detected.push(monthId);
+    }
+  };
+
+  await Promise.all(Array.from({ length: Math.min(4, candidates.length) }, worker));
+  return detected
+    .sort((a, b) => a.localeCompare(b))
+    .map(id => ({ id, nombre: getMonthName(id) }));
+}
+
+async function refreshMonthCatalog(selectLatest = false) {
+  const yearSelect = document.getElementById('filterAnio');
+  const monthSelect = document.getElementById('filterMes');
+  const scanButton = document.getElementById('scanMonths');
+  const previousYear = yearSelect.value;
+  const previousMonth = monthSelect.value;
+  yearSelect.disabled = true;
+  monthSelect.disabled = true;
+  scanButton.disabled = true;
+  setStatus('Buscando archivos mensuales con formato AAAA-MM.js...');
+
+  try {
+    CONFIG_MESES = await discoverAvailableMonths();
+
+    if (!CONFIG_MESES.length) {
+      YEAR_DATA_ARRAY = [];
+      RAW_DATA_ARRAY = [];
+      DATA.processed = {};
+      yearSelect.replaceChildren();
+      monthSelect.replaceChildren();
+      addOption(yearSelect, 'all', 'Sin datos');
+      addOption(monthSelect, 'all', 'Sin datos');
+      renderDashboardComponents();
+      setStatus('No se encontraron archivos mensuales desde 2026 con formato AAAA-MM.js.');
+      showToast('No se encontraron archivos mensuales.', 'error');
+      return;
+    }
+
+    const years = [...new Set(CONFIG_MESES.map(month => month.id.slice(0, 4)))].sort((a, b) => b.localeCompare(a));
+    yearSelect.replaceChildren();
+    years.forEach(year => addOption(yearSelect, year, year));
+    const preferredYear = !selectLatest && years.includes(previousYear) ? previousYear : years[0];
+    yearSelect.value = preferredYear;
+    populateMonthFilter(preferredYear, !selectLatest ? previousMonth : 'all');
+    document.getElementById('filterFechaInicio').value = '';
+    document.getElementById('filterFechaFin').value = '';
+    state = { ...state, anio: preferredYear, mes: monthSelect.value, canal: 'all', agente: 'all', tipificacion: 'all', fechaInicio: '', fechaFin: '' };
+    updateFilterBanner();
+    loadSelectedYear();
+  } finally {
+    yearSelect.disabled = false;
+    monthSelect.disabled = false;
+    scanButton.disabled = false;
+  }
+}
+
+function populateMonthFilter(year, preferredMonth = 'all') {
+  const monthSelect = document.getElementById('filterMes');
+  const months = CONFIG_MESES.filter(month => month.id.startsWith(`${year}-`));
+  monthSelect.replaceChildren();
+  addOption(monthSelect, 'all', 'Todos los meses');
+  months.forEach(month => addOption(monthSelect, month.id, month.nombre.replace(` ${year}`, '')));
+  monthSelect.value = months.some(month => month.id === preferredMonth) ? preferredMonth : 'all';
+}
+
+function parseSelectedYear(year) {
+  return CONFIG_MESES
+    .filter(month => month.id.startsWith(`${year}-`))
+    .flatMap(month => {
+      const tsvText = window.MisMesesDisponibles?.[month.id];
+      if (typeof tsvText !== 'string' || !tsvText.trim()) return [];
+      return parseTSV(tsvText)
+        .filter(row => {
+          const channel = normalizeText(getColValue(row, ['tipo de canal', 'canal']));
+          const agent = normalizeText(getColValue(row, ['agente']));
+          return allowedChannels.has(channel) && Boolean(agent);
+        })
+        .map(row => ({ ...row, __monthId: month.id }));
+    });
+}
+
+function loadSelectedYear() {
+  state.anio = document.getElementById('filterAnio').value;
+  state.mes = document.getElementById('filterMes').value;
+  YEAR_DATA_ARRAY = parseSelectedYear(state.anio);
+  RAW_DATA_ARRAY = state.mes === 'all'
+    ? YEAR_DATA_ARRAY
+    : YEAR_DATA_ARRAY.filter(row => row.__monthId === state.mes);
+
+  mapFilterStructure(YEAR_DATA_ARRAY);
+  updateDateBounds(RAW_DATA_ARRAY.length ? RAW_DATA_ARRAY : YEAR_DATA_ARRAY);
+  processFilteredData();
+  const period = state.mes === 'all' ? `el año ${state.anio}` : getMonthName(state.mes);
+  setStatus(`Base procesada con ${formatNum(RAW_DATA_ARRAY.length)} conversaciones válidas de ${period}.`);
+  showToast(`Datos de ${period} importados.`);
+}
+
+function addOption(select, value, label) {
+  select.add(new Option(label, value));
+}
+
+function mapFilterStructure(rows) {
+  const channels = [...new Set(rows.map(row => getColValue(row, ['tipo de canal', 'canal'])).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'));
+  const agents = [...new Set(rows
+    .map(row => getColValue(row, ['agente']))
+    .filter(agent => agent && normalizeText(agent) !== 'bot'))]
+    .sort((a, b) => a.localeCompare(b, 'es'));
+
+  channels.forEach((channel, index) => { if (!COLORS[channel]) COLORS[channel] = CHART_PALETTE[index % CHART_PALETTE.length]; });
+  agents.forEach((agent, index) => {
+    if (!AGENT_COLORS[agent]) AGENT_COLORS[agent] = CHART_PALETTE[index % CHART_PALETTE.length];
+    if (!AGENT_INITIALS[agent]) {
+      const parts = agent.trim().split(/\s+/);
+      AGENT_INITIALS[agent] = `${parts[0]?.[0] || ''}${parts[1]?.[0] || ''}`.toUpperCase();
+    }
+  });
+
+  const channelSelect = document.getElementById('filterCanal');
+  const agentSelect = document.getElementById('filterAgente');
+  channelSelect.replaceChildren(); agentSelect.replaceChildren();
+  addOption(channelSelect, 'all', 'Todos los canales');
+  addOption(agentSelect, 'all', 'Todos los agentes');
+  channels.forEach(channel => addOption(channelSelect, channel, channel));
+  agents.forEach(agent => addOption(agentSelect, agent, agent));
+}
+
+function processFilteredData() {
+  if (!RAW_DATA_ARRAY.length) {
+    DATA.processed = {};
+    renderDashboardComponents();
+    return;
+  }
+
+  const activePredicate = buildActiveRowPredicate();
+  const filteredRows = RAW_DATA_ARRAY.filter(activePredicate);
+  const filteredYearRows = YEAR_DATA_ARRAY.filter(activePredicate);
+
+  const volCanal = {};
+  const tipifCountsAll = {};
+  const volHora = {};
+  const delegationByHour = {};
+  const delegation = {};
+  const agentStats = {};
+  const attentionType = { Bot: 0, 'Agente humano': 0 };
+  let finalizadas = 0;
+  let globalWaitSum = 0, globalWaitCount = 0;
+  let globalFrtSum = 0, globalFrtCount = 0;
+  let globalArtSum = 0, globalArtCount = 0;
+  let minDate = null, maxDate = null;
+
+  filteredRows.forEach(row => {
+    const channel = getColValue(row, ['tipo de canal', 'canal']) || 'Desconocido';
+    const agent = getColValue(row, ['agente']) || 'Sin Asignar';
+    const typification = getColValue(row, ['tipificación', 'tipificacion', 'etiquetas']) || 'Sin Tipificar';
+    const delegationState = getColValue(row, ['estado de delegación', 'estado de delegacion', 'estado delegado']) || 'Desconocido';
+    const rowDate = parseRowDate(getColValue(row, ['fecha de inicio', 'fecha']));
+
+    volCanal[channel] = (volCanal[channel] || 0) + 1;
+    tipifCountsAll[typification] = (tipifCountsAll[typification] || 0) + 1;
+    if (isResolvedRow(row)) finalizadas++;
+    attentionType[normalizeText(agent) === 'bot' ? 'Bot' : 'Agente humano']++;
+
+    if (!delegation[delegationState]) delegation[delegationState] = {};
+    delegation[delegationState][channel] = (delegation[delegationState][channel] || 0) + 1;
+
+    if (rowDate) {
+      minDate = !minDate || rowDate < minDate ? rowDate : minDate;
+      maxDate = !maxDate || rowDate > maxDate ? rowDate : maxDate;
+      const hour = rowDate.getHours();
+      volHora[hour] = (volHora[hour] || 0) + 1;
+      if (!delegationByHour[delegationState]) delegationByHour[delegationState] = {};
+      delegationByHour[delegationState][hour] = (delegationByHour[delegationState][hour] || 0) + 1;
+    }
+
+    if (normalizeText(agent) !== 'bot') {
+      if (!agentStats[agent]) agentStats[agent] = { contacts: 0, frtSum: 0, frtCount: 0, artSum: 0, artCount: 0, waitSum: 0, waitCount: 0 };
+      const stats = agentStats[agent];
+      const frt = parseMetric(row, ['tiempo de respuesta']);
+      const art = parseMetric(row, ['duración', 'duracion']);
+      const wait = parseMetric(row, ['tiempo de espera']);
+      stats.contacts++;
+      if (frt !== null) { stats.frtSum += frt; stats.frtCount++; globalFrtSum += frt; globalFrtCount++; }
+      if (art !== null) { stats.artSum += art; stats.artCount++; globalArtSum += art; globalArtCount++; }
+      if (wait !== null) { stats.waitSum += wait; stats.waitCount++; globalWaitSum += wait; globalWaitCount++; }
+    }
+  });
+
+  const contactosAgente = {}, frtAgente = {}, artAgente = {}, esperaAgente = {};
+  Object.entries(agentStats).forEach(([agent, stats]) => {
+    contactosAgente[agent] = stats.contacts;
+    frtAgente[agent] = stats.frtCount ? stats.frtSum / stats.frtCount : 0;
+    artAgente[agent] = stats.artCount ? stats.artSum / stats.artCount : 0;
+    esperaAgente[agent] = stats.waitCount ? stats.waitSum / stats.waitCount : 0;
+  });
+
+  const volHoraSorted = {};
+  Object.keys(volHora).map(Number).sort((a, b) => a - b).forEach(hour => { volHoraSorted[hour] = volHora[hour]; });
+  const orderedHours = Object.keys(volHoraSorted);
+  const delegacionHora = {};
+  Object.keys(delegationByHour).forEach(type => { delegacionHora[type] = orderedHours.map(hour => delegationByHour[type][hour] || 0); });
+  const tipif = Object.fromEntries(Object.entries(tipifCountsAll).sort((a, b) => b[1] - a[1]).slice(0, 10));
+
+  const yearMonths = CONFIG_MESES.filter(month => month.id.startsWith(`${state.anio}-`));
+  const socialChannels = [...new Set(YEAR_DATA_ARRAY.map(row => getColValue(row, ['tipo de canal', 'canal'])).filter(Boolean))]
+    .sort((a, b) => {
+      const orderA = CANALES_PERMITIDOS.indexOf(a);
+      const orderB = CANALES_PERMITIDOS.indexOf(b);
+      if (orderA !== -1 || orderB !== -1) return (orderA === -1 ? 999 : orderA) - (orderB === -1 ? 999 : orderB);
+      return a.localeCompare(b, 'es');
+    });
+  const monthlyResolver = yearMonths.map(month => {
+    const resolvedRows = filteredYearRows.filter(row => row.__monthId === month.id && isResolvedRow(row));
+    const bot = resolvedRows.filter(row => normalizeText(getColValue(row, ['agente'])) === 'bot').length;
+    const human = resolvedRows.length - bot;
+    return { id: month.id, label: month.nombre.replace(` ${state.anio}`, ''), bot, human, total: resolvedRows.length };
+  });
+  const monthlyBotByChannel = yearMonths.map(month => {
+    const counts = Object.fromEntries(socialChannels.map(channel => [channel, 0]));
+    filteredYearRows.forEach(row => {
+      if (row.__monthId !== month.id || !isResolvedRow(row) || normalizeText(getColValue(row, ['agente'])) !== 'bot') return;
+      const channel = getColValue(row, ['tipo de canal', 'canal']) || 'Desconocido';
+      counts[channel] = (counts[channel] || 0) + 1;
+    });
+    return { id: month.id, label: month.nombre.replace(` ${state.anio}`, ''), counts };
+  });
+  const monthlyHumanByChannel = yearMonths.map(month => {
+    const counts = Object.fromEntries(socialChannels.map(channel => [channel, 0]));
+    filteredYearRows.forEach(row => {
+      if (row.__monthId !== month.id || !isResolvedRow(row) || normalizeText(getColValue(row, ['agente'])) === 'bot') return;
+      const channel = getColValue(row, ['tipo de canal', 'canal']) || 'Desconocido';
+      counts[channel] = (counts[channel] || 0) + 1;
+    });
+    return { id: month.id, label: month.nombre.replace(` ${state.anio}`, ''), counts };
+  });
+
+  DATA.processed = {
+    total: filteredRows.length,
+    finalizadas,
+    esperaGlobal: globalWaitCount ? globalWaitSum / globalWaitCount : 0,
+    frtGlobal: globalFrtCount ? globalFrtSum / globalFrtCount : 0,
+    artGlobal: globalArtCount ? globalArtSum / globalArtCount : 0,
+    volCanal,
+    tipifCountsAll,
+    frtAgente,
+    artAgente,
+    contactosAgente,
+    esperaAgente,
+    tipif,
+    attentionType,
+    volHora: volHoraSorted,
+    delegacionHora,
+    delegacion: delegation,
+    monthlyResolver,
+    monthlyBotByChannel,
+    monthlyHumanByChannel,
+    socialChannels,
+    minDate,
+    maxDate
+  };
+  renderDashboardComponents();
+}
+
+function renderMonthlyTables(data) {
+  const resolverBody = document.getElementById('monthlyResolverBody');
+  const socialHead = document.getElementById('monthlySocialHead');
+  const socialBody = document.getElementById('monthlySocialBody');
+  const humanSocialHead = document.getElementById('monthlyHumanSocialHead');
+  const humanSocialBody = document.getElementById('monthlyHumanSocialBody');
+  resolverBody.replaceChildren();
+  socialHead.replaceChildren();
+  socialBody.replaceChildren();
+  humanSocialHead.replaceChildren();
+  humanSocialBody.replaceChildren();
+
+  if (!data?.monthlyResolver?.length) {
+    resolverBody.innerHTML = '<tr><td class="empty-table" colspan="5">No hay información mensual disponible.</td></tr>';
+    socialHead.innerHTML = '<tr><th>Mes</th><th>Total Bot</th></tr>';
+    socialBody.innerHTML = '<tr><td class="empty-table" colspan="2">No hay información mensual disponible.</td></tr>';
+    humanSocialHead.innerHTML = '<tr><th>Mes</th><th>Total Humano</th></tr>';
+    humanSocialBody.innerHTML = '<tr><td class="empty-table" colspan="2">No hay información mensual disponible.</td></tr>';
+    return;
+  }
+
+  data.monthlyResolver.forEach(month => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${escapeHTML(month.label)}</td><td class="mono">${formatNum(month.bot)}</td><td class="mono">${formatNum(month.human)}</td><td class="mono">${formatNum(month.total)}</td><td class="mono">${month.total ? (month.bot / month.total * 100).toFixed(1) : '0.0'}%</td>`;
+    resolverBody.appendChild(row);
+  });
+  const resolverTotals = data.monthlyResolver.reduce((total, month) => ({ bot: total.bot + month.bot, human: total.human + month.human, total: total.total + month.total }), { bot: 0, human: 0, total: 0 });
+  const resolverTotalRow = document.createElement('tr');
+  resolverTotalRow.className = 'total-row';
+  resolverTotalRow.innerHTML = `<td>Total</td><td class="mono">${formatNum(resolverTotals.bot)}</td><td class="mono">${formatNum(resolverTotals.human)}</td><td class="mono">${formatNum(resolverTotals.total)}</td><td class="mono">${resolverTotals.total ? (resolverTotals.bot / resolverTotals.total * 100).toFixed(1) : '0.0'}%</td>`;
+  resolverBody.appendChild(resolverTotalRow);
+
+  socialHead.innerHTML = `<tr><th>Mes</th>${data.socialChannels.map(channel => `<th>${escapeHTML(channel)}</th>`).join('')}<th>Total Bot</th></tr>`;
+  data.monthlyBotByChannel.forEach(month => {
+    const total = data.socialChannels.reduce((sum, channel) => sum + (month.counts[channel] || 0), 0);
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${escapeHTML(month.label)}</td>${data.socialChannels.map(channel => `<td class="mono">${formatNum(month.counts[channel] || 0)}</td>`).join('')}<td class="mono">${formatNum(total)}</td>`;
+    socialBody.appendChild(row);
+  });
+  const channelTotals = Object.fromEntries(data.socialChannels.map(channel => [channel, data.monthlyBotByChannel.reduce((sum, month) => sum + (month.counts[channel] || 0), 0)]));
+  const botTotal = Object.values(channelTotals).reduce((sum, value) => sum + value, 0);
+  const socialTotalRow = document.createElement('tr');
+  socialTotalRow.className = 'total-row';
+  socialTotalRow.innerHTML = `<td>Total</td>${data.socialChannels.map(channel => `<td class="mono">${formatNum(channelTotals[channel])}</td>`).join('')}<td class="mono">${formatNum(botTotal)}</td>`;
+  socialBody.appendChild(socialTotalRow);
+
+  humanSocialHead.innerHTML = `<tr><th>Mes</th>${data.socialChannels.map(channel => `<th>${escapeHTML(channel)}</th>`).join('')}<th>Total Humano</th></tr>`;
+  data.monthlyHumanByChannel.forEach(month => {
+    const total = data.socialChannels.reduce((sum, channel) => sum + (month.counts[channel] || 0), 0);
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${escapeHTML(month.label)}</td>${data.socialChannels.map(channel => `<td class="mono">${formatNum(month.counts[channel] || 0)}</td>`).join('')}<td class="mono">${formatNum(total)}</td>`;
+    humanSocialBody.appendChild(row);
+  });
+  const humanChannelTotals = Object.fromEntries(data.socialChannels.map(channel => [channel, data.monthlyHumanByChannel.reduce((sum, month) => sum + (month.counts[channel] || 0), 0)]));
+  const humanTotal = Object.values(humanChannelTotals).reduce((sum, value) => sum + value, 0);
+  const humanSocialTotalRow = document.createElement('tr');
+  humanSocialTotalRow.className = 'total-row';
+  humanSocialTotalRow.innerHTML = `<td>Total</td>${data.socialChannels.map(channel => `<td class="mono">${formatNum(humanChannelTotals[channel])}</td>`).join('')}<td class="mono">${formatNum(humanTotal)}</td>`;
+  humanSocialBody.appendChild(humanSocialTotalRow);
+}
+
+function renderDashboardComponents() {
+  const d = DATA.processed;
+  const hasSourceData = RAW_DATA_ARRAY.length > 0;
+
+  if (!hasSourceData || !d || typeof d.total !== 'number') {
+    ['kpi-total', 'kpi-fin', 'kpi-espera', 'kpi-frt', 'kpi-art'].forEach(id => { document.getElementById(id).textContent = '—'; });
+    document.getElementById('kpi-fin-pct').textContent = '— tasa de cierre';
+    document.getElementById('kpi-sub-fecha').textContent = 'Selecciona un año para comenzar';
+    document.getElementById('agentTableBody').replaceChildren();
+    renderMonthlyTables(null);
+    destroyCharts();
+    return;
+  }
+
+  document.getElementById('kpi-total').textContent = formatNum(d.total);
+  document.getElementById('kpi-fin').textContent = formatNum(d.finalizadas);
+  document.getElementById('kpi-espera').textContent = `${formatNum(d.esperaGlobal)}s`;
+  document.getElementById('kpi-frt').textContent = `${formatNum(d.frtGlobal)}s`;
+  document.getElementById('kpi-art').textContent = `${(d.artGlobal / 60).toFixed(1)}m`;
+  document.getElementById('kpi-fin-pct').textContent = d.total ? `${(d.finalizadas / d.total * 100).toFixed(1)}% tasa de cierre` : '0% tasa de cierre';
+  document.getElementById('kpi-sub-fecha').textContent = d.minDate && d.maxDate ? `${formatDate(d.minDate)} – ${formatDate(d.maxDate)}` : 'Sin coincidencias';
+  renderMonthlyTables(d);
+
+  if (!d.total) {
+    document.getElementById('agentTableBody').replaceChildren();
+    destroyCharts();
+    setStatus('No hay conversaciones que coincidan con los filtros activos.');
+    return;
+  }
+
+  const channelLabels = Object.keys(d.volCanal).sort((a, b) => d.volCanal[b] - d.volCanal[a]);
+  const frtAgents = Object.keys(d.frtAgente).sort((a, b) => d.frtAgente[b] - d.frtAgente[a]);
+  const artAgents = Object.keys(d.artAgente).sort((a, b) => d.artAgente[b] - d.artAgente[a]);
+  const contactAgents = Object.keys(d.contactosAgente).sort((a, b) => d.contactosAgente[b] - d.contactosAgente[a]);
+  const typificationLabels = Object.keys(d.tipifCountsAll).sort((a, b) => d.tipifCountsAll[b] - d.tipifCountsAll[a]).slice(0, 10);
+  const def = getChartDefaults();
+
+  const tbody = document.getElementById('agentTableBody');
+  tbody.replaceChildren();
+  const maxContacts = Math.max(...Object.values(d.contactosAgente), 1);
+  contactAgents.forEach(agent => {
+    const color = AGENT_COLORS[agent] || '#3b82f6';
+    const contacts = d.contactosAgente[agent];
+    const percentage = (contacts / maxContacts * 100).toFixed(0);
+    const row = document.createElement('tr');
+    if (state.agente === agent) row.classList.add('selected-row');
+    row.innerHTML = `
+      <td><div style="display:flex;align-items:center"><div class="agent-avatar" style="background:${color}22;color:${color}">${escapeHTML(AGENT_INITIALS[agent])}</div><span class="agent-name">${escapeHTML(agent)}</span></div></td>
+      <td><div class="mono" style="color:${color}">${formatNum(contacts)}</div><div class="bar-mini" style="background:${color}33;width:60px"><div style="width:${percentage}%;height:100%;background:${color};border-radius:2px"></div></div></td>
+      <td><span class="mono">${formatNum(d.frtAgente[agent])}s</span></td>
+      <td><span class="mono">${(d.artAgente[agent] / 60).toFixed(1)}m</span></td>
+      <td><span class="mono">${formatNum(d.esperaAgente[agent])}s</span></td>`;
+    row.addEventListener('click', () => {
+      document.getElementById('filterAgente').value = state.agente === agent ? 'all' : agent;
+      applyFilters();
+    });
+    tbody.appendChild(row);
+  });
+
+  if (typeof window.Chart === 'undefined') {
+    setStatus('Los datos se cargaron, pero no fue posible iniciar la librería de gráficas. Verifica tu conexión a internet.');
+    showToast('No se pudo cargar Chart.js.', 'error');
+    return;
+  }
+
+  destroyCharts();
+  const crossFilter = type => (_event, elements, chart) => {
+    if (!elements.length) return;
+    const clicked = chart.data.labels[elements[0].index];
+    const select = document.getElementById(type === 'canal' ? 'filterCanal' : 'filterAgente');
+    select.value = select.value === clicked ? 'all' : clicked;
+    applyFilters();
+  };
+  const typificationFilter = (_event, elements, chart) => {
+    if (!elements.length) return;
+    const clicked = chart.data.labels[elements[0].index];
+    state.tipificacion = state.tipificacion === clicked ? 'all' : clicked;
+    applyFilters();
+  };
+
+  charts.c1 = new Chart(document.getElementById('chartVolCanal'), {
+    type: 'bar',
+    data: { labels: channelLabels, datasets: [{ label: 'Conversaciones', data: channelLabels.map(label => d.volCanal[label]), backgroundColor: channelLabels.map(label => `${COLORS[label] || '#3b82f6'}88`), borderRadius: 6 }] },
+    options: { ...def, onClick: function(event, elements) { crossFilter('canal')(event, elements, this); }, plugins: { ...def.plugins, legend: { display: false } } }
+  });
+
+  charts.c2 = new Chart(document.getElementById('chartEstadoCanal'), {
+    type: 'bar',
+    data: { labels: typificationLabels, datasets: [{ label: 'Contactos', data: typificationLabels.map(label => d.tipifCountsAll[label]), backgroundColor: typificationLabels.map((_, index) => `${CHART_PALETTE[index % CHART_PALETTE.length]}88`), borderRadius: 6 }] },
+    options: { ...def, onClick: function(event, elements) { typificationFilter(event, elements, this); }, plugins: { ...def.plugins, legend: { display: false } } }
+  });
+
+  charts.c3 = new Chart(document.getElementById('chartFRT'), {
+    type: 'bar',
+    data: { labels: frtAgents, datasets: [{ label: 'FRT (seg)', data: frtAgents.map(agent => d.frtAgente[agent]), backgroundColor: frtAgents.map(agent => `${AGENT_COLORS[agent] || '#3b82f6'}88`), borderRadius: 6 }] },
+    options: { ...def, indexAxis: 'y', onClick: function(event, elements) { crossFilter('agente')(event, elements, this); }, plugins: { ...def.plugins, legend: { display: false } } }
+  });
+
+  charts.c4 = new Chart(document.getElementById('chartART'), {
+    type: 'bar',
+    data: { labels: artAgents, datasets: [{ label: 'ART (seg)', data: artAgents.map(agent => d.artAgente[agent]), backgroundColor: artAgents.map(agent => `${AGENT_COLORS[agent] || '#a855f7'}77`), borderRadius: 6 }] },
+    options: { ...def, indexAxis: 'y', onClick: function(event, elements) { crossFilter('agente')(event, elements, this); }, plugins: { ...def.plugins, legend: { display: false } } }
+  });
+
+  charts.c5 = new Chart(document.getElementById('chartHora'), {
+    type: 'line',
+    data: { labels: Object.keys(d.volHora).map(hour => `${hour}:00`), datasets: [{ label: 'Conversaciones', data: Object.values(d.volHora), borderColor: '#00d4aa', backgroundColor: 'rgba(0,212,170,0.10)', fill: true, tension: 0.25, pointBackgroundColor: '#00d4aa', pointRadius: 3 }] },
+    options: { ...def, plugins: { ...def.plugins, legend: { display: false } } }
+  });
+
+  const donutOptions = getDoughnutOptions(def, function(event, elements) { crossFilter('canal')(event, elements, this); });
+  donutOptions.cutout = '56%';
+  donutOptions.layout = { padding: { top: 2, right: 4, bottom: 2, left: 4 } };
+  donutOptions.plugins.legend = { ...donutOptions.plugins.legend, position: 'left', align: 'center' };
+  charts.c7 = new Chart(document.getElementById('chartDonut'), {
+    type: 'doughnut',
+    data: { labels: channelLabels, datasets: [{ data: channelLabels.map(label => d.volCanal[label]), backgroundColor: channelLabels.map(label => `${COLORS[label] || '#3b82f6'}cc`), borderColor: channelLabels.map(label => COLORS[label] || '#3b82f6'), borderWidth: 2, radius: '96%' }] },
+    options: donutOptions,
+    plugins: [doughnutCenterTotal]
+  });
+
+  const attentionLabels = ['Bot', 'Agente humano'];
+  charts.c8 = new Chart(document.getElementById('chartTipif'), {
+    type: 'doughnut',
+    data: {
+      labels: attentionLabels,
+      datasets: [{
+        label: 'Casos atendidos',
+        data: attentionLabels.map(label => d.attentionType[label] || 0),
+        backgroundColor: ['rgba(0,212,170,0.78)', 'rgba(59,130,246,0.78)'],
+        borderColor: ['#00d4aa', '#3b82f6'],
+        borderWidth: 2
+      }]
+    },
+    options: getDoughnutOptions(def),
+    plugins: [doughnutCenterTotal]
+  });
+
+  const hours = Object.keys(d.volHora).map(hour => `${hour}:00`);
+  charts.c9 = new Chart(document.getElementById('chartFRTHora'), {
+    type: 'line',
+    data: { labels: hours, datasets: Object.keys(d.delegacionHora).map((type, index) => ({ label: type, data: d.delegacionHora[type], borderColor: CHART_PALETTE[index % CHART_PALETTE.length], backgroundColor: 'transparent', tension: 0.2, pointRadius: 2, borderWidth: 2 })) },
+    options: { ...def, plugins: { ...def.plugins, legend: { ...def.plugins.legend, position: 'right' } } }
+  });
+
+  const delegationTypes = Object.keys(d.delegacion);
+  charts.c10 = new Chart(document.getElementById('chartDelegacion'), {
+    type: 'bar',
+    data: { labels: channelLabels, datasets: delegationTypes.map((type, index) => ({ label: type, data: channelLabels.map(channel => d.delegacion[type][channel] || 0), backgroundColor: `${CHART_PALETTE[index % CHART_PALETTE.length]}99`, borderRadius: 4 })) },
+    options: {
+      ...def,
+      onClick: function(event, elements) { crossFilter('canal')(event, elements, this); },
+      scales: {
+        x: { ...def.scales.x, stacked: true },
+        y: { ...def.scales.y, stacked: true }
+      }
+    }
+  });
+
+
+
+  document.querySelectorAll('.chart-card').forEach(card => card.classList.remove('selected'));
+  if (state.canal !== 'all') {
+    document.getElementById('card-vol-canal').classList.add('selected');
+    document.getElementById('card-donut').classList.add('selected');
+    document.getElementById('card-delegacion').classList.add('selected');
+    document.getElementById('card-monthly-human-social').classList.add('selected');
+  }
+  if (state.agente !== 'all') {
+    document.getElementById('card-frt').classList.add('selected');
+    document.getElementById('card-art').classList.add('selected');
+    document.getElementById('card-agente-tabla').classList.add('selected');
+  }
+  if (state.tipificacion !== 'all') {
+    document.getElementById('card-estado-canal').classList.add('selected');
+  }
+}
+
+function updateFilterBanner() {
+  const banner = document.getElementById('filterBanner');
+  const parts = [];
+  if (state.anio !== 'all') parts.push(`Año: ${state.anio}`);
+  if (state.mes !== 'all') parts.push(`Mes: ${getMonthName(state.mes).replace(` ${state.anio}`, '')}`);
+  if (state.fechaInicio || state.fechaFin) parts.push('Fechas activas');
+  if (state.canal !== 'all') parts.push(`Canal: ${state.canal}`);
+  if (state.agente !== 'all') parts.push(`Agente: ${state.agente}`);
+  if (state.tipificacion !== 'all') parts.push(`Tipificación: ${state.tipificacion}`);
+  banner.classList.toggle('show', parts.length > 0);
+  document.getElementById('filterBannerText').textContent = parts.length ? `Filtros dinámicos activos — ${parts.join(' · ')}` : '';
+}
+
+function applyFilters() {
+  const start = document.getElementById('filterFechaInicio').value;
+  const end = document.getElementById('filterFechaFin').value;
+  if (start && end && start > end) {
+    showToast('La fecha inicial no puede ser posterior a la fecha final.', 'error');
+    return;
+  }
+
+  state.canal = document.getElementById('filterCanal').value;
+  state.agente = document.getElementById('filterAgente').value;
+  state.fechaInicio = start;
+  state.fechaFin = end;
+  state.mes = document.getElementById('filterMes').value;
+  updateFilterBanner();
+  processFilteredData();
+  if (DATA.processed.total > 0) setStatus(`Mostrando ${formatNum(DATA.processed.total)} conversaciones de ${formatNum(RAW_DATA_ARRAY.length)}.`);
+}
+
+function resetFilters() {
+  document.getElementById('filterCanal').value = 'all';
+  document.getElementById('filterAgente').value = 'all';
+  document.getElementById('filterFechaInicio').value = '';
+  document.getElementById('filterFechaFin').value = '';
+  state = { ...state, canal: 'all', agente: 'all', tipificacion: 'all', fechaInicio: '', fechaFin: '' };
+  updateFilterBanner();
+  processFilteredData();
+  if (RAW_DATA_ARRAY.length) setStatus(`Base procesada con ${formatNum(RAW_DATA_ARRAY.length)} conversaciones válidas.`);
+}
+
+function cambiarMes() {
+  document.getElementById('filterCanal').value = 'all';
+  document.getElementById('filterAgente').value = 'all';
+  document.getElementById('filterFechaInicio').value = '';
+  document.getElementById('filterFechaFin').value = '';
+  state = { ...state, canal: 'all', agente: 'all', tipificacion: 'all', fechaInicio: '', fechaFin: '', mes: document.getElementById('filterMes').value };
+  RAW_DATA_ARRAY = state.mes === 'all'
+    ? YEAR_DATA_ARRAY
+    : YEAR_DATA_ARRAY.filter(row => row.__monthId === state.mes);
+  updateDateBounds(RAW_DATA_ARRAY.length ? RAW_DATA_ARRAY : YEAR_DATA_ARRAY);
+  updateFilterBanner();
+  processFilteredData();
+  const period = state.mes === 'all' ? `el año ${state.anio}` : getMonthName(state.mes);
+  setStatus(`Base procesada con ${formatNum(RAW_DATA_ARRAY.length)} conversaciones válidas de ${period}.`);
+}
+
+function cambiarAnio() {
+  const year = document.getElementById('filterAnio').value;
+  document.getElementById('filterCanal').value = 'all';
+  document.getElementById('filterAgente').value = 'all';
+  document.getElementById('filterFechaInicio').value = '';
+  document.getElementById('filterFechaFin').value = '';
+  state = { ...state, anio: year, mes: 'all', canal: 'all', agente: 'all', tipificacion: 'all', fechaInicio: '', fechaFin: '' };
+  populateMonthFilter(year, 'all');
+  updateFilterBanner();
+  loadSelectedYear();
+}
+
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light-mode');
+  document.getElementById('themeToggle').textContent = isLight ? '🌙' : '☀️';
+  renderDashboardComponents();
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  if (typeof window.Chart !== 'undefined') Chart.defaults.font.family = 'Inter';
+  const yearSelect = document.getElementById('filterAnio');
+  const monthSelect = document.getElementById('filterMes');
+  yearSelect.replaceChildren();
+  monthSelect.replaceChildren();
+  addOption(yearSelect, 'all', 'Buscando años...');
+  addOption(monthSelect, 'all', 'Buscando meses...');
+
+  yearSelect.addEventListener('change', cambiarAnio);
+  monthSelect.addEventListener('change', cambiarMes);
+  ['filterCanal', 'filterAgente', 'filterFechaInicio', 'filterFechaFin'].forEach(id => document.getElementById(id).addEventListener('change', applyFilters));
+  await refreshMonthCatalog(true);
+});
+</script>
+</body>
+</html>
